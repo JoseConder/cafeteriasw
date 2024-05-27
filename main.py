@@ -4,7 +4,7 @@ from tkinter import messagebox
 import customtkinter as ctk
 from ticketer import generar_ticket
 from dbconfig import *
-
+import threading
 
 productos_collection = db['productos']
 pedidos_collection = db['pedidos']
@@ -15,16 +15,33 @@ cantidades_seleccionadas = []
 contador_pedidos = 1
 
 
+def mostrar_alerta(tipo, mensaje):
+    alerta_frame = ctk.CTkFrame(root, corner_radius=10)
+    alerta_frame.place(relx=0.5, rely=0.1, anchor=tk.CENTER)
+
+    mensaje_label = ctk.CTkLabel(alerta_frame, text=mensaje, wraplength=300, font=('Arial', 14))
+    mensaje_label.pack(padx=20, pady=10)
+
+    if tipo == "Error":
+        alerta_frame.configure(fg_color=("red", "darkred"))
+    elif tipo == "info":
+        alerta_frame.configure(fg_color=("green", "darkgreen"))
+
+    def cerrar_alerta():
+        alerta_frame.after(1000, alerta_frame.destroy)  # Espera 3 segundos y cierra la alerta
+
+    threading.Thread(target=cerrar_alerta).start()
+
 def agregar_producto():
    producto_index = listbox_productos.curselection()
    if not producto_index:
-       messagebox.showerror("Error", "Por favor seleccione un producto")
+       mostrar_alerta("Error", "Por favor seleccione un producto")
        return
 
 
    cantidad = cantidad_var.get()
    if not cantidad or not cantidad.isdigit() or int(cantidad) <= 0:
-       messagebox.showerror("Error", "Por favor ingrese una cantidad válida")
+       mostrar_alerta("Error", "Por favor ingrese una cantidad válida")
        return
 
 
@@ -39,7 +56,7 @@ def agregar_producto():
 def eliminar_producto():
    producto_index = listbox_pedido.curselection()
    if not producto_index:
-       messagebox.showerror("Error", "Por favor seleccione un producto de la orden")
+       mostrar_alerta("Error", "Por favor seleccione un producto de la orden")
        return
 
 
@@ -62,13 +79,13 @@ def agregar_pedido():
 
 
    if not productos_seleccionados:
-       messagebox.showerror("Error", "Por favor seleccione al menos un producto")
+       mostrar_alerta("Error", "Por favor seleccione al menos un producto")
        return
 
 
    nombre = entry_nombre.get()
    if not nombre:
-       messagebox.showerror("Error", "Por favor ingrese su nombre")
+       mostrar_alerta("Error", "Por favor ingrese su nombre")
        return
 
 
@@ -93,7 +110,7 @@ def agregar_pedido():
    print(ticket_generado)
 
 
-   messagebox.showinfo("Pedido Generado", "Su pedido ha sido generado")
+   mostrar_alerta("info", "Su pedido ha sido generado")
    actualizar_cola_espera()
 
 
@@ -115,12 +132,10 @@ def actualizar_cola_espera():
 
 
 ctk.set_appearance_mode("System")
-ctk.set_default_color_theme("blue")
-
+ctk.set_default_color_theme("green")
 
 root = ctk.CTk()
 root.title("Sistema de Pedidos")
-
 
 frame_top = ctk.CTkFrame(root)
 frame_top.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
@@ -128,59 +143,52 @@ frame_top.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
 
 ctk.CTkLabel(frame_top, text="Nombre:").pack(side=tk.LEFT)
 entry_nombre = ctk.CTkEntry(frame_top)
-entry_nombre.pack(side=tk.LEFT, padx=5)
+entry_nombre.pack(side=tk.LEFT, padx=5, expand=True, fill='x')
 
 
-frame_productos = ctk.CTkFrame(root)
-frame_productos.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
-
+frame_productos = ctk.CTkFrame(root,corner_radius=10)
+frame_productos.pack(pady=10, fill="both", expand=True)
 
 ctk.CTkLabel(frame_productos, text="Productos Disponibles:").pack(side=tk.TOP, anchor=tk.W)
-listbox_productos = tk.Listbox(frame_productos, width=50, height=10)
+
+# Configurar los colores manualmente
+bg_color = "#2b2b2b"  # color de fondo similar a "Dark" mode
+fg_color = "#ffffff"  # color de texto similar a "Light" mode
+
+listbox_productos = tk.Listbox(frame_productos, width=50, height=10,bg=bg_color, fg=fg_color)
 listbox_productos.pack(side=tk.LEFT)
 productos = list(productos_collection.find())
 for producto in productos:
-   listbox_productos.insert(tk.END, f"{producto['nombre']} - ${producto['precio']}")
-
+    listbox_productos.insert(tk.END, f"{producto['nombre']} - ${producto['precio']}")
 
 frame_cantidad = ctk.CTkFrame(frame_productos)
 frame_cantidad.pack(side=tk.LEFT, padx=10)
-
 
 ctk.CTkLabel(frame_cantidad, text="Cantidad:").pack()
 cantidad_var = ctk.StringVar()
 entry_cantidad = ctk.CTkEntry(frame_cantidad, textvariable=cantidad_var)
 entry_cantidad.pack()
 
-
 ctk.CTkButton(frame_cantidad, text="Agregar Producto", command=agregar_producto).pack(pady=5)
-
 
 frame_pedido = ctk.CTkFrame(root)
 frame_pedido.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
 
-
 ctk.CTkLabel(frame_pedido, text="Productos en la Orden:").pack(side=tk.TOP, anchor=tk.W)
-listbox_pedido = tk.Listbox(frame_pedido, width=50, height=10)
+listbox_pedido = tk.Listbox(frame_pedido, width=50, height=10,bg=bg_color, fg=fg_color)
 listbox_pedido.pack(side=tk.LEFT)
-
 
 ctk.CTkButton(frame_pedido, text="Eliminar Producto", command=eliminar_producto).pack(side=tk.LEFT, padx=10)
 
-
 ctk.CTkButton(root, text="Agregar Pedido", command=agregar_pedido).pack(pady=10)
-
 
 frame_espera = ctk.CTkFrame(root)
 frame_espera.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
 
-
 ctk.CTkLabel(frame_espera, text="Pedidos en Espera:").pack(side=tk.TOP, anchor=tk.W)
-listbox_espera = tk.Listbox(frame_espera, width=50, height=10)
+listbox_espera = tk.Listbox(frame_espera, width=50, height=10,bg=bg_color, fg=fg_color)
 listbox_espera.pack()
 
-
 actualizar_cola_espera()
-
 
 root.mainloop()
