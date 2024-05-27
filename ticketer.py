@@ -6,6 +6,7 @@ from barcode import generate
 from barcode.writer import ImageWriter
 from dbconfig import *
 import os
+
 def generar_ticket(id_orden):
     ordenes = pedidos_collection
     orden = ordenes.find_one({'_id': id_orden})

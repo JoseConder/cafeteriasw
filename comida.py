@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from dbconfig import *
+import customtkinter as ctk
 
 def agregar_producto():
     nombre = entry_nombre.get()
