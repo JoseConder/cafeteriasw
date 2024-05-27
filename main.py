@@ -76,7 +76,6 @@ def agregar_pedido():
    total_con_impuestos = total * 1.15
 
 
-   global contador_pedidos 
    ticket = {
        "numero_pedido": contador_pedidos, 
        "nombre": nombre,

@@ -25,6 +25,46 @@ def agregar_producto():
     limpiar_campos()
     actualizar_lista_productos()
 
+def eliminar_producto():
+    selected_item = treeview_productos.selection()
+    if not selected_item:
+        messagebox.showerror("Error", "Por favor seleccione un producto para eliminar")
+        return
+
+    nombre_producto = treeview_productos.item(selected_item, "values")[0]
+    productos_collection.delete_one({"nombre": nombre_producto})
+    messagebox.showinfo("Producto Eliminado", f"El producto '{nombre_producto}' ha sido eliminado exitosamente")
+    actualizar_lista_productos()
+
+def actualizar_producto():
+    selected_item = treeview_productos.selection()
+    if not selected_item:
+        messagebox.showerror("Error", "Por favor seleccione un producto para actualizar")
+        return
+
+    nombre_viejo = treeview_productos.item(selected_item, "values")[0]
+
+    # Obtener los nuevos detalles del producto
+    nuevo_nombre = entry_nombre.get()
+    nueva_descripcion = entry_descripcion.get()
+    nuevo_precio = entry_precio.get()
+    nuevo_tiempo_preparacion = entry_tiempo_preparacion.get()
+
+    # Actualizar los detalles del producto en la base de datos
+    productos_collection.update_one(
+        {"nombre": nombre_viejo},
+        {"$set": {
+            "nombre": nuevo_nombre,
+            "descripcion": nueva_descripcion,
+            "precio": float(nuevo_precio),
+            "tiempo_preparacion": int(nuevo_tiempo_preparacion)
+        }}
+    )
+
+    messagebox.showinfo("Producto Actualizado", f"El producto '{nombre_viejo}' ha sido actualizado exitosamente")
+    limpiar_campos()
+    actualizar_lista_productos()
+
 def actualizar_lista_productos():
     treeview_productos.delete(*treeview_productos.get_children())
     productos = productos_collection.find()
@@ -41,9 +81,11 @@ def limpiar_campos():
     entry_precio.delete(0, ctk.END)
     entry_tiempo_preparacion.delete(0, ctk.END)
 
+# Configuración de la apariencia
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
+# Creación de la interfaz de usuario
 root = ctk.CTk()
 root.title("Sistema de Pedidos")
 
@@ -67,6 +109,7 @@ entry_tiempo_preparacion = ctk.CTkEntry(frame_campos, width=300)
 entry_tiempo_preparacion.grid(row=3, column=1, padx=5, pady=5)
 
 ctk.CTkButton(root, text="Agregar Producto", command=agregar_producto).pack()
+ctk.CTkButton(root, text="Actualizar Producto", command=actualizar_producto).pack()
 
 frame_productos = ctk.CTkFrame(root)
 frame_productos.pack(pady=10)
@@ -78,6 +121,8 @@ treeview_productos = ttk.Treeview(frame_productos, columns=columns, show="headin
 for col in columns:
     treeview_productos.heading(col, text=col)
 treeview_productos.pack()
+ctk.CTkButton(root, text="Eliminar Producto", fg_color=("red"),command=eliminar_producto).pack()
+
 
 actualizar_lista_productos()
 
