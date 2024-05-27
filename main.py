@@ -131,7 +131,7 @@ def actualizar_cola_espera():
        listbox_espera.insert(tk.END, f"{nombre_cliente} - ${total_pedido} - {estado_pedido}")
 
 
-ctk.set_appearance_mode("System")
+ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("green")
 
 root = ctk.CTk()
